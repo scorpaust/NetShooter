@@ -8,9 +8,17 @@ public class PlayerController : MonoBehaviour
 
     public float mouseSensitivity = 1f;
 
-    public float moveSpeed = 5f;
+    public float moveSpeed = 5f, runSpeed = 8f;
+
+    public float jumpForce = 5f;
+
+    public float gravityMode = 2.5f;
 
     public bool invertLook;
+
+    public Transform groundCheckPoint;
+
+    public LayerMask groundLayer;
 
     public CharacterController charControl;
 
@@ -20,10 +28,18 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 moveDir, movement;
 
+    private float activeMoveSpeed;
+
+    private Camera cam;
+
+    private bool isGrounded;
+
     // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Confined;
+
+        cam = Camera.main;
     }
 
     // Update is called once per frame
@@ -48,8 +64,52 @@ public class PlayerController : MonoBehaviour
 
         moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
 
-        movement = ((transform.forward * moveDir.z) + (transform.right * moveDir.x)).normalized;
+        if (Input.GetKey(KeyCode.LeftShift))
+		{
+            activeMoveSpeed = runSpeed;
+		}
+        else
+		{
+            activeMoveSpeed = moveSpeed;
+		}
 
-        charControl.Move(movement * moveSpeed * Time.deltaTime);
+        float yVel = movement.y;
+
+        movement = ((transform.forward * moveDir.z) + (transform.right * moveDir.x)).normalized * activeMoveSpeed;
+
+        if (!charControl.isGrounded)
+            movement.y = yVel;
+        else
+            movement.y = 0f;
+
+
+        isGrounded = Physics.Raycast(groundCheckPoint.position, Vector3.down, 0.25f, groundLayer);
+
+        if (Input.GetButtonDown("Jump") && isGrounded)
+		{
+            movement.y = jumpForce;
+		}
+
+        movement.y += Physics.gravity.y * Time.deltaTime * gravityMode;
+
+        charControl.Move(movement * Time.deltaTime);
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+		{
+            Cursor.lockState = CursorLockMode.None;
+		} else if (Cursor.lockState == CursorLockMode.None)
+		{
+            if (Input.GetMouseButtonDown(0))
+			{
+                Cursor.lockState = CursorLockMode.Locked;
+			}
+		}
     }
+
+	private void LateUpdate()
+	{
+        cam.transform.position = viewPoint.position;
+
+        cam.transform.rotation = viewPoint.rotation;
+	}
 }
