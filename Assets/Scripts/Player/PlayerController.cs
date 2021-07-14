@@ -24,6 +24,10 @@ public class PlayerController : MonoBehaviour
 
     public GameObject bulletImpact;
 
+    public float timeBetweenShots = 0.1f;
+
+    public float maxHeat = 10f, heatPerShot = 1f, coolRate = 4f, overheatCoolRate = 5f;
+
     private float verticalRotStore;
 
     private Vector2 mouseInput;
@@ -35,6 +39,12 @@ public class PlayerController : MonoBehaviour
     private Camera cam;
 
     private bool isGrounded;
+
+    private float shotCounter;
+
+    private float heatCounter;
+
+    private bool overheated;
 
     // Start is called before the first frame update
     void Start()
@@ -96,9 +106,35 @@ public class PlayerController : MonoBehaviour
 
         charControl.Move(movement * Time.deltaTime);
 
-        if (Input.GetMouseButtonDown(0))
+        if (!overheated)
 		{
-            Shoot();
+            if (Input.GetMouseButtonDown(0))
+            {
+                Shoot();
+            }
+
+            if (Input.GetMouseButton(0))
+            {
+                shotCounter -= Time.deltaTime;
+
+                if (shotCounter <= 0f)
+                {
+                    Shoot();
+                }
+            }
+
+            heatCounter -= coolRate * Time.deltaTime;
+        } else
+		{
+            heatCounter -= overheatCoolRate * Time.deltaTime;
+
+            if (heatCounter == 0f)
+            { 
+                overheated = false;
+			}
+
+            if (heatCounter < 0f)
+                heatCounter = 0f;
 		}
 
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -127,6 +163,17 @@ public class PlayerController : MonoBehaviour
 
             Destroy(bulletImpactObject, 10f);
         }
+
+        shotCounter = timeBetweenShots;
+
+        heatCounter += heatPerShot;
+
+        if (heatCounter >= maxHeat)
+		{
+            heatCounter = maxHeat;
+
+            overheated = true;
+		}
 	}
 
 	private void LateUpdate()
