@@ -563,6 +563,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   charControl: {fileID: 883204253}
+  bulletImpact: {fileID: 5332113331764169400, guid: 48bda439fc59af14c816240df562beee,
+    type: 3}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
