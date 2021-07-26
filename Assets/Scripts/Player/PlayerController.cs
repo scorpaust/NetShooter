@@ -62,6 +62,12 @@ public class PlayerController : MonoBehaviour
         cam = Camera.main;
 
         UIController.instance.weaponTempSlider.maxValue = maxHeat;
+
+        Transform newTransf = SpawnManager.instance.GetSpawnPoint();
+
+        transform.position = newTransf.position;
+
+        transform.rotation = newTransf.rotation;
     }
 
     // Update is called once per frame
@@ -180,6 +186,16 @@ public class PlayerController : MonoBehaviour
 
             SwitchGun();
         }
+
+        for (int i = 0; i < allGuns.Length; i++)
+		{
+            if (Input.GetKeyDown((i+1).ToString())) {
+                
+                selectedGun = i;
+
+                SwitchGun();
+			}
+		}
 
         if (Input.GetKeyDown(KeyCode.Escape))
 		{
