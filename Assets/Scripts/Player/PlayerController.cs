@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviourPunCallbacks
 {
     public Transform viewPoint;
 
@@ -25,6 +26,8 @@ public class PlayerController : MonoBehaviour
     public Gun[] allGuns;
 
     public GameObject bulletImpact;
+
+    public GameObject playerHitImpact;
 
     // public float timeBetweenShots = 0.1f;
 
@@ -73,140 +76,146 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")) * mouseSensitivity;
-
-        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y + mouseInput.x, transform.rotation.eulerAngles.z);
-
-        verticalRotStore += mouseInput.y;
-
-        verticalRotStore = Mathf.Clamp(verticalRotStore, -60f, 60f);
-
-        if (invertLook)
+        if (photonView.IsMine)
 		{
-            viewPoint.rotation = Quaternion.Euler(verticalRotStore, viewPoint.rotation.eulerAngles.y, viewPoint.rotation.eulerAngles.z);
-        }
-        else
-		{
-            viewPoint.rotation = Quaternion.Euler(-verticalRotStore, viewPoint.rotation.eulerAngles.y, viewPoint.rotation.eulerAngles.z);
-        }
+            mouseInput = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")) * mouseSensitivity;
 
-        moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
+            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y + mouseInput.x, transform.rotation.eulerAngles.z);
 
-        if (Input.GetKey(KeyCode.LeftShift))
-		{
-            activeMoveSpeed = runSpeed;
-		}
-        else
-		{
-            activeMoveSpeed = moveSpeed;
-		}
+            verticalRotStore += mouseInput.y;
 
-        float yVel = movement.y;
+            verticalRotStore = Mathf.Clamp(verticalRotStore, -60f, 60f);
 
-        movement = ((transform.forward * moveDir.z) + (transform.right * moveDir.x)).normalized * activeMoveSpeed;
-
-        if (!charControl.isGrounded)
-            movement.y = yVel;
-        else
-            movement.y = 0f;
-
-
-        isGrounded = Physics.Raycast(groundCheckPoint.position, Vector3.down, 0.25f, groundLayer);
-
-        if (Input.GetButtonDown("Jump") && isGrounded)
-		{
-            movement.y = jumpForce;
-		}
-
-        movement.y += Physics.gravity.y * Time.deltaTime * gravityMode;
-
-        charControl.Move(movement * Time.deltaTime);
-
-        if (allGuns[selectedGun].muzzleFlash.activeInHierarchy)
-		{
-            muzzleCounter -= Time.deltaTime;
-
-            if (muzzleCounter <= 0)
-                allGuns[selectedGun].muzzleFlash.SetActive(false);
-        }
-
-        if (!overheated)
-		{
-            if (Input.GetMouseButtonDown(0))
+            if (invertLook)
             {
-                Shoot();
+                viewPoint.rotation = Quaternion.Euler(verticalRotStore, viewPoint.rotation.eulerAngles.y, viewPoint.rotation.eulerAngles.z);
+            }
+            else
+            {
+                viewPoint.rotation = Quaternion.Euler(-verticalRotStore, viewPoint.rotation.eulerAngles.y, viewPoint.rotation.eulerAngles.z);
             }
 
-            if (Input.GetMouseButton(0) && allGuns[selectedGun].isAutomatic)
-            {
-                shotCounter -= Time.deltaTime;
+            moveDir = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
 
-                if (shotCounter <= 0f)
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                activeMoveSpeed = runSpeed;
+            }
+            else
+            {
+                activeMoveSpeed = moveSpeed;
+            }
+
+            float yVel = movement.y;
+
+            movement = ((transform.forward * moveDir.z) + (transform.right * moveDir.x)).normalized * activeMoveSpeed;
+
+            if (!charControl.isGrounded)
+                movement.y = yVel;
+            else
+                movement.y = 0f;
+
+
+            isGrounded = Physics.Raycast(groundCheckPoint.position, Vector3.down, 0.25f, groundLayer);
+
+            if (Input.GetButtonDown("Jump") && isGrounded)
+            {
+                movement.y = jumpForce;
+            }
+
+            movement.y += Physics.gravity.y * Time.deltaTime * gravityMode;
+
+            charControl.Move(movement * Time.deltaTime);
+
+            if (allGuns[selectedGun].muzzleFlash.activeInHierarchy)
+            {
+                muzzleCounter -= Time.deltaTime;
+
+                if (muzzleCounter <= 0)
+                    allGuns[selectedGun].muzzleFlash.SetActive(false);
+            }
+
+            if (!overheated)
+            {
+                if (Input.GetMouseButtonDown(0))
                 {
                     Shoot();
                 }
+
+                if (Input.GetMouseButton(0) && allGuns[selectedGun].isAutomatic)
+                {
+                    shotCounter -= Time.deltaTime;
+
+                    if (shotCounter <= 0f)
+                    {
+                        Shoot();
+                    }
+                }
+
+                heatCounter -= coolRate * Time.deltaTime;
+
+            }
+            else
+            {
+                heatCounter -= overheatCoolRate * Time.deltaTime;
+
+                if (heatCounter <= 0f)
+                {
+                    overheated = false;
+
+                    UIController.instance.overheatedMessage.gameObject.SetActive(false);
+                }
             }
 
-            heatCounter -= coolRate * Time.deltaTime;
+            if (heatCounter < 0f)
+                heatCounter = 0f;
 
-        } else
-		{
-            heatCounter -= overheatCoolRate * Time.deltaTime;
-
-            if (heatCounter <= 0f)
-            { 
-                overheated = false;
-
-                UIController.instance.overheatedMessage.gameObject.SetActive(false);
-			}
-        }
-
-        if (heatCounter < 0f)
-            heatCounter = 0f;
-
-        UIController.instance.weaponTempSlider.value = heatCounter;
+            UIController.instance.weaponTempSlider.value = heatCounter;
 
 
-        if (Input.GetAxisRaw("Mouse ScrollWheel") > 0f)
-		{
-            selectedGun++;
+            if (Input.GetAxisRaw("Mouse ScrollWheel") > 0f)
+            {
+                selectedGun++;
 
-            if (selectedGun >= allGuns.Length)
-                selectedGun = 0;
-
-            SwitchGun();
-		}
-        else if (Input.GetAxisRaw("Mouse ScrollWheel") < 0f)
-		{
-            selectedGun--;
-
-            if (selectedGun < 0)
-                selectedGun = allGuns.Length - 1;
-
-            SwitchGun();
-        }
-
-        for (int i = 0; i < allGuns.Length; i++)
-		{
-            if (Input.GetKeyDown((i+1).ToString())) {
-                
-                selectedGun = i;
+                if (selectedGun >= allGuns.Length)
+                    selectedGun = 0;
 
                 SwitchGun();
-			}
-		}
+            }
+            else if (Input.GetAxisRaw("Mouse ScrollWheel") < 0f)
+            {
+                selectedGun--;
 
-        if (Input.GetKeyDown(KeyCode.Escape))
-		{
-            Cursor.lockState = CursorLockMode.None;
-		} else if (Cursor.lockState == CursorLockMode.None)
-		{
-            if (Input.GetMouseButtonDown(0))
-			{
-                Cursor.lockState = CursorLockMode.Locked;
-			}
-		}
+                if (selectedGun < 0)
+                    selectedGun = allGuns.Length - 1;
+
+                SwitchGun();
+            }
+
+            for (int i = 0; i < allGuns.Length; i++)
+            {
+                if (Input.GetKeyDown((i + 1).ToString()))
+                {
+
+                    selectedGun = i;
+
+                    SwitchGun();
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Cursor.lockState = CursorLockMode.None;
+            }
+            else if (Cursor.lockState == CursorLockMode.None)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                }
+            }
+        }
+        
     }
 
     private void Shoot()
@@ -217,11 +226,21 @@ public class PlayerController : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit)) 
         {
-            Debug.Log("We hit " + hit.collider.gameObject.name);
+            // Debug.Log("We hit " + hit.collider.gameObject.name);
 
-            GameObject bulletImpactObject = Instantiate(bulletImpact, hit.point + (hit.normal * 0.002f), Quaternion.LookRotation(hit.normal, Vector3.up));
+            if (hit.collider.gameObject.CompareTag("Player"))
+			{
+                PhotonNetwork.Instantiate(playerHitImpact.name, hit.point, Quaternion.identity);
 
-            Destroy(bulletImpactObject, 10f);
+                hit.collider.gameObject.GetPhotonView().RPC("DealDamage", RpcTarget.All, photonView.Owner.NickName);
+			} 
+            else
+			{
+                GameObject bulletImpactObject = Instantiate(bulletImpact, hit.point + (hit.normal * 0.002f), Quaternion.LookRotation(hit.normal, Vector3.up));
+
+                Destroy(bulletImpactObject, 10f);
+            }
+
         }
 
         shotCounter = allGuns[selectedGun].timeBetweenShots;
@@ -244,9 +263,12 @@ public class PlayerController : MonoBehaviour
 
 	private void LateUpdate()
 	{
-        cam.transform.position = viewPoint.position;
+        if (photonView.IsMine)
+		{
+            cam.transform.position = viewPoint.position;
 
-        cam.transform.rotation = viewPoint.rotation;
+            cam.transform.rotation = viewPoint.rotation;
+        }
 	}
 
     private void SwitchGun()
@@ -258,4 +280,18 @@ public class PlayerController : MonoBehaviour
 
         allGuns[selectedGun].muzzleFlash.SetActive(false);
 	}
+
+    [PunRPC]
+    public void DealDamage(string damager)
+	{
+        TakeDamage(damager);
+	}
+
+    [PunRPC]
+    public void TakeDamage(string damager)
+	{
+        Debug.Log(photonView.Owner.NickName + " has been hit by " + damager);
+
+        gameObject.SetActive(false);
+    }
 }
