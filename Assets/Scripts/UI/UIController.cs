@@ -21,4 +21,6 @@ public class UIController : MonoBehaviour
 
 	public TMP_Text deathText;
 
+	public Slider healthSlider;
+
 }

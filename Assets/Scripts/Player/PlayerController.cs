@@ -35,6 +35,10 @@ public class PlayerController : MonoBehaviourPunCallbacks
 
     public float muzzleDisplayTime;
 
+    public int maxHealth = 100;
+
+    private int currentHealth;
+
     private float verticalRotStore;
 
     private Vector2 mouseInput;
@@ -63,6 +67,12 @@ public class PlayerController : MonoBehaviourPunCallbacks
         Cursor.lockState = CursorLockMode.Confined;
 
         cam = Camera.main;
+
+        currentHealth = maxHealth;
+
+        UIController.instance.healthSlider.maxValue = maxHealth;
+
+        UIController.instance.healthSlider.value = currentHealth;
 
         UIController.instance.weaponTempSlider.maxValue = maxHeat;
 
@@ -232,7 +242,7 @@ public class PlayerController : MonoBehaviourPunCallbacks
 			{
                 PhotonNetwork.Instantiate(playerHitImpact.name, hit.point, Quaternion.identity);
 
-                hit.collider.gameObject.GetPhotonView().RPC("DealDamage", RpcTarget.All, photonView.Owner.NickName);
+                hit.collider.gameObject.GetPhotonView().RPC("DealDamage", RpcTarget.All, photonView.Owner.NickName, allGuns[selectedGun].shotDamage);
 			} 
             else
 			{
@@ -282,19 +292,29 @@ public class PlayerController : MonoBehaviourPunCallbacks
 	}
 
     [PunRPC]
-    public void DealDamage(string damager)
+    public void DealDamage(string damager, int damageAmount)
 	{
-        TakeDamage(damager);
+        TakeDamage(damager, damageAmount);
 	}
 
     [PunRPC]
-    public void TakeDamage(string damager)
+    public void TakeDamage(string damager, int damageAmount)
 	{
         if (photonView.IsMine)
 		{
-            // Debug.Log(photonView.Owner.NickName + " has been hit by " + damager);
 
-            PlayerSpawner.instance.Die(damager);
+            currentHealth -= damageAmount;
+
+            if (currentHealth <= 0)
+			{
+                currentHealth = 0;
+
+                PlayerSpawner.instance.Die(damager);
+            }
+
+            UIController.instance.healthSlider.value = currentHealth;
+
+            // Debug.Log(photonView.Owner.NickName + " has been hit by " + damager);            
         }
         
     }
