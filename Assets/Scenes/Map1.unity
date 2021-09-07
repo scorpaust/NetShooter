@@ -3712,6 +3712,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 8467815648464364786, guid: 17897035bbe623e40b732fb5fa9d09e7,
     type: 3}
+  deathEffect: {fileID: 8872168485871539129, guid: 0cd18ad2cc7da664780ef97b5e13ef38,
+    type: 3}
 --- !u!4 &1531484048
 Transform:
   m_ObjectHideFlags: 0
