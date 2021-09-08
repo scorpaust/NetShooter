@@ -332,6 +332,7 @@ MonoBehaviour:
   coolRate: 4
   overheatCoolRate: 5
   muzzleDisplayTime: 0.016666668
+  maxHealth: 100
 --- !u!114 &3978913016938767589
 MonoBehaviour:
   m_ObjectHideFlags: 0

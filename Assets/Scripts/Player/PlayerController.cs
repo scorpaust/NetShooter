@@ -61,12 +61,18 @@ public class PlayerController : MonoBehaviourPunCallbacks
 
     private int selectedGun = 0;
 
-    // Start is called before the first frame update
-    void Start()
+	// Start is called before the first frame update
+	void Start()
     {
         Cursor.lockState = CursorLockMode.Confined;
 
-        cam = Camera.main;
+        cam = Camera.main;        
+
+        Transform newTransf = SpawnManager.instance.GetSpawnPoint();
+
+        transform.position = newTransf.position;
+
+        transform.rotation = newTransf.rotation;
 
         currentHealth = maxHealth;
 
@@ -76,11 +82,6 @@ public class PlayerController : MonoBehaviourPunCallbacks
 
         UIController.instance.weaponTempSlider.maxValue = maxHeat;
 
-        Transform newTransf = SpawnManager.instance.GetSpawnPoint();
-
-        transform.position = newTransf.position;
-
-        transform.rotation = newTransf.rotation;
     }
 
     // Update is called once per frame
