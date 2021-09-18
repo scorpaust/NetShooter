@@ -27,4 +27,12 @@ public class UIController : MonoBehaviour
 
 	public Slider healthSlider;
 
+	public GameObject leaderboard;
+
+	public LeaderboardPlayer leaderboardPlayerDisplay;
+
+	public GameObject endScreen;
+
+	public TMP_Text timerText;
+
 }

@@ -9,6 +9,8 @@ public class Launcher : MonoBehaviourPunCallbacks
 {
     public static Launcher instance;
 
+	public static bool hasSetNickname;
+
 	public GameObject loadingScreen;
 
 	public TMP_Text loadingText;
@@ -41,7 +43,9 @@ public class Launcher : MonoBehaviourPunCallbacks
 
 	public GameObject roomTestButton;
 
-	private bool hasSetNickname;
+	public string[] allMaps;
+
+	public bool changeMapBetweenRounds = true;
 
 	private List<RoomButton> allRoomButtons = new List<RoomButton>();
 
@@ -65,6 +69,9 @@ public class Launcher : MonoBehaviourPunCallbacks
 #if UNITY_EDITOR
 		roomTestButton.SetActive(true);
 #endif
+		Cursor.lockState = CursorLockMode.None;
+
+		Cursor.visible = true;
 	}
 
 	private void ListAllPlayers()
@@ -297,7 +304,9 @@ public class Launcher : MonoBehaviourPunCallbacks
 
 	public void StartGame()
 	{
-		PhotonNetwork.LoadLevel(levelToPlay);
+		// PhotonNetwork.LoadLevel(levelToPlay);
+
+		PhotonNetwork.LoadLevel(allMaps[Random.Range(0, allMaps.Length)]);
 	}
 
 	public override void OnMasterClientSwitched(Player newMasterClient)
